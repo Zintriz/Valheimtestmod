@@ -5,6 +5,7 @@ using Jotunn.Utils;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Management.Instrumentation;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
@@ -70,42 +71,90 @@ namespace Valheimtestmod
         string name;
         string description;
         List<string> teleportList;
-        ItemConfig itemConfig;
-        SE_Stats effect;
+        public SE_Stats effect;
+        string iconName; //Valheimtestmod/Assets/Images/test.png
+        Dictionary<string,int> requirements;
+        bool useIncinerator;
 
-        IncineratorConversionConfig incineratorConfig = new IncineratorConversionConfig();
-        public Rings(string name)
+        public Rings(string name, string description, List<string> teleportList, Dictionary<string, int> requirements, bool useIncinerator = false)
         {
             this.name = name;
-            this.teleportList = new List<string>{ "$item_copper", "$item_copperore","$item_copperscrap","$item_tin","$item_tinore"};
+            this.description = description;
+            this.teleportList = teleportList; //this.teleportList = new List<string>{ "$item_copper", "$item_copperore","$item_copperscrap","$item_tin","$item_tinore"};
+            this.requirements = requirements;
+            this.useIncinerator = useIncinerator;
+            
+            string nameLower = name.ToLower();
 
-            this.itemConfig = new ItemConfig();
-            this.effect = ScriptableObject.CreateInstance<SE_Stats>();
-
-            itemConfig.Name = "$item_" + name.ToLower();
-            itemConfig.Description = "$item_" + name.ToLower() + "_desc";
+            var itemConfig = new ItemConfig();
+            itemConfig.Name = name;
+            itemConfig.Description = description;
             //Sprite icon = AssetUtils.LoadSpriteFromFile($"ValheimMod/Assets/{name}.png");
-            Sprite icon = AssetUtils.LoadSpriteFromFile($"Valheimtestmod/Assets/Madge.png");
-            itemConfig.Icons = new Sprite[] { icon };
-            CustomItem customItem = new CustomItem(name, "BeltStrength", itemConfig);
-            ItemManager.Instance.AddItem(customItem);
+            //Sprite icon = AssetUtils.LoadSpriteFromFile($"Valheimtestmod/Assets/Images/Madge.png");
+            Sprite[] variants = {
+                AssetUtils.LoadSpriteFromFile("Valheimtestmod/Assets/Images/test_var1.png"),
+                AssetUtils.LoadSpriteFromFile("Valheimtestmod/Assets/Images/test_var2.png"),
+                //AssetUtils.LoadSpriteFromFile("Valheimtestmod/Assets/Images/test_var3.png"),
+                //AssetUtils.LoadSpriteFromFile("Valheimtestmod/Assets/Images/test_var4.png"),
+                PrefabManager.Cache.GetPrefab<Sprite>("TrophyBoar"),
+                PrefabManager.Cache.GetPrefab<Sprite>("TrophyDragonQueen")
+            };
 
+            Texture2D styleTex = AssetUtils.LoadTexture("Valheimtestmod/Assets/Images/test_varpaint.png");
+            itemConfig.Icons = variants;//new Sprite[] { icon };
+            itemConfig.StyleTex = styleTex;//AssetUtils.LoadSpriteFromFile($"Valheimtestmod/Assets/Images/Madge.png");
+
+            if (useIncinerator)
+            {
+                IncineratorConversionConfig incineratorConfig = new IncineratorConversionConfig();
+                foreach (var requirement in requirements)
+                {
+                    incineratorConfig.Requirements.Add(new IncineratorRequirementConfig(requirement.Key,requirement.Value));
+                }
+                ItemManager.Instance.AddItemConversion(new CustomItemConversion(incineratorConfig));
+            }
+            else
+            {
+                foreach (var requirement in requirements)
+                {
+                    itemConfig.AddRequirement(new RequirementConfig(requirement.Key,requirement.Value));
+                }
+                itemConfig.CraftingStation = "piece_workbench";
+            }
+            
+            CustomItem customItem = new CustomItem(name, "ShieldWood", itemConfig);
+            //CustomItem customItem = new CustomItem(name, "BeltStrength", itemConfig);
+            ItemManager.Instance.AddItem(customItem);
+            effect = ScriptableObject.CreateInstance<SE_Stats>();
             effect.name = name + "Effect";
-            effect.m_name = "$" + name.ToLower() + "_effectname";
-            effect.m_tooltip = "$" + name.ToLower() + "_tooltip";
-            effect.m_startMessage = "$" + name.ToLower() + "_effectstart";
-            effect.m_stopMessage = "$" + name.ToLower() + "_effectstop";
+            effect.m_name = "$" + nameLower + "_effectname";
+            effect.m_tooltip = "$" + nameLower + "_tooltip";
+            effect.m_startMessage = "$" + nameLower + "_effectstart";
+            effect.m_stopMessage = "$" + nameLower + "_effectstop";
             effect.m_startMessageType = MessageHud.MessageType.Center;
             effect.m_stopMessageType = MessageHud.MessageType.Center;
             //effect.m_icon = AssetUtils.LoadSpriteFromFile($"ValheimMod/Assets/{name}.png");
-            effect.m_icon = AssetUtils.LoadSpriteFromFile($"Valheimtestmod/Assets/Madge.png");
-            effect.m_addMaxCarryWeight = 100;
+            effect.m_icon = AssetUtils.LoadSpriteFromFile($"Valheimtestmod/Assets/Images/Madge.png");
 
+
+
+            ItemDrop itemDrop = customItem.ItemDrop;
+            if ( name == "ModerRing")
+            {
+                var moder = PrefabManager.Cache.GetPrefab<StatusEffect>("GP_Moder");
+                itemDrop.m_itemData.m_shared.m_equipStatusEffect = moder;
+                return;
+            }
             CustomStatusEffect CE = new CustomStatusEffect(effect, fixReference: false);
             ItemManager.Instance.AddStatusEffect(CE);
-            ItemDrop itemDrop = customItem.ItemDrop;
             itemDrop.m_itemData.m_shared.m_equipStatusEffect = CE.StatusEffect;
 
+            /*RecipeConfig addItself = new RecipeConfig();
+            addItself.Item = name;
+            addItself.AddRequirement(new RequirementConfig(name,1));
+            addItself.CraftingStation = "piece_workbench";
+            ItemManager.Instance.AddRecipe(new CustomRecipe(addItself));*/
         }
+
     }
 }

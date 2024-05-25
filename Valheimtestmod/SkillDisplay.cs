@@ -19,7 +19,7 @@ namespace Valheimtestmod
         public static CustomLocalization Localization = LocalizationManager.Instance.GetLocalization();
 
 
-        public static void Display()
+        public static void UpdateDisplay()
         {
             foreach (var skill in Player.m_localPlayer.m_skills.m_skillData)
             {
@@ -41,13 +41,13 @@ namespace Valheimtestmod
                         case SkillType.Run:
                             continue;
                         default:
-                            if (skill.Key == SkillType.Jump) { Logger.LogInfo($"default skill: {skill.Key}"); }
+                            //if (skill.Key == SkillType.Jump) { Logger.LogInfo($"default skill: {skill.Key}"); }
                             break;
                     }
                     string skillname = $"$skill_{skill.Key}".ToLower();
                     float gain = Mathf.Max(0, 100 * (skill.Value.GetLevelPercentage() - currentSkillLevels[skill.Key]));
                     Sprite msgIcon = skill.Value.m_info.m_icon;
-                    float level = skill.Value.m_level-1;
+                    float level = skill.Value.m_level;
                     float levelPercentage = 100 * skill.Value.GetLevelPercentage();
                     string msgText = $"{skillname} [Lv {level:##0}] {levelPercentage:##0.0}% (+{gain:0.##}%)";
                     Patch.UpdateText(Localization.TryTranslate(skillname) + $" [Lv {level:##0}] {levelPercentage:##0.0}% (+{gain:0.##}%)");

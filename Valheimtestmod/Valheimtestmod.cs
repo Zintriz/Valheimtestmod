@@ -2,16 +2,12 @@ using BepInEx;
 using HarmonyLib;
 using Jotunn.Configs;
 using Jotunn.Entities;
-using Jotunn.GUI;
 using Jotunn.Managers;
 using Jotunn.Utils;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics.PerformanceData;
-using System.Linq.Expressions;
 using UnityEngine;
 using UnityEngine.UI;
-using UnityEngine.UIElements;
 using Logger = Jotunn.Logger;
 
 namespace Valheimtestmod
@@ -31,13 +27,13 @@ namespace Valheimtestmod
         // Use this class to add your own localization to the game
         // https://valheim-modding.github.io/Jotunn/tutorials/localization.html
         public static CustomLocalization Localization = LocalizationManager.Instance.GetLocalization();
-        
+
         private void Awake()
         {
             CommandManager.Instance.AddConsoleCommand(new ToggleSkillPanelCommand());
-            
+
             harmony.PatchAll(typeof(Patch));
-            harmony.PatchAll(typeof(Patch2));
+            //harmony.PatchAll(typeof(Patch2));
 
             //Player.m_localPlayer.GetSkillFactor(Skills.SkillType.Knives);
             // Jotunn comes with its own Logger class to provide a consistent Log style for all mods using it
@@ -47,17 +43,90 @@ namespace Valheimtestmod
             // To learn more about Jotunn's features, go to
             // https://valheim-modding.github.io/Jotunn/tutorials/overview.html
             //PrefabManager.OnVanillaPrefabsAvailable += AddCustomItems;
-            
+            //PrefabManager.OnVanillaPrefabsAvailable += AddVariants;
+
+        }
+ 
+
+        private void AddVariants()
+        {
+            Sprite[] variants = {
+                AssetUtils.LoadSpriteFromFile("Valheimtestmod/Assets/Images/test_var1.png"),
+                AssetUtils.LoadSpriteFromFile("Valheimtestmod/Assets/Images/test_var2.png"),
+                AssetUtils.LoadSpriteFromFile("Valheimtestmod/Assets/Images/test_var3.png"),
+                AssetUtils.LoadSpriteFromFile("Valheimtestmod/Assets/Images/test_var4.png"),
+            };
+            Texture2D styleTex = AssetUtils.LoadTexture("Valheimtestmod/Assets/Images/test_varpaint.png");
+
+            ItemConfig shieldConfig = new ItemConfig();
+            shieldConfig.Name = "$lulz_shield";
+            shieldConfig.Description = "$lulz_shield_desc";
+            shieldConfig.AddRequirement(new RequirementConfig("Wood", 1));
+            shieldConfig.Icons = variants;
+            shieldConfig.StyleTex = styleTex;
+            ItemManager.Instance.AddItem(new CustomItem("item_lulzshield", "ShieldWood", shieldConfig));
+
+            ItemConfig swordConfig = new ItemConfig();
+            swordConfig.Name = "$lulz_sword";
+            swordConfig.Description = "$lulz_sword_desc";
+            swordConfig.AddRequirement(new RequirementConfig("Stone", 1));
+            swordConfig.Icons = variants;
+            swordConfig.StyleTex = styleTex;
+            ItemManager.Instance.AddItem(new CustomItem("item_lulzsword", "SwordBronze", swordConfig));
+
+            // You want that to run only once, Jotunn has the item cached for the game session
+            PrefabManager.OnVanillaPrefabsAvailable -= AddVariants;
         }
         void AddCustomItems()
         {
             try
             {
-                Rings testring = new Rings("TestRing");
-                foreach (var item in normalHelmets)
+                Rings eikthyrRing = new Rings("EikthyrRing", "EikthyrRing Description", 
+                    new List<string> { "$empty" },
+                    new Dictionary<string, int> {{"Wood",1},{"Stone",1 } });
+
+                eikthyrRing.effect.m_addMaxCarryWeight = 150;
+                eikthyrRing.effect.m_attackStaminaUseModifier = -0.10f; //-10f
+
+                Rings elderRing = new Rings("ElderRing", "ElderRing Description",
+                    new List<string> { "$item_copper", "$item_copperore", "$item_copperscrap", "$item_tin", "$item_tinore" },
+                    new Dictionary<string, int> { { "Wood", 1 }, { "Stone", 1 } });
+
+                elderRing.effect.m_addMaxCarryWeight = 200;
+                elderRing.effect.m_attackStaminaUseModifier = -0.10f; //-10f
+
+                Rings bonemassRing = new Rings("BonemassRing", "BonemassRing Description",
+                    new List<string> { "$item_iron", "item_ironscraps"},
+                    new Dictionary<string, int> { { "Wood", 1 }, { "Stone", 1 } });
+
+                bonemassRing.effect.m_addMaxCarryWeight = 250;
+                bonemassRing.effect.m_attackStaminaUseModifier = -0.10f; //-10f
+
+
+                Rings moderRing = new Rings("ModerRing", "ModerRing Description",
+                    new List<string> { "$item_silver", "$item_silverore" },
+                    new Dictionary<string, int> { { "Wood", 1 }, { "Stone", 1 } });
+                moderRing.effect.m_addMaxCarryWeight = 300;
+                moderRing.effect.m_attackStaminaUseModifier = -0.10f; //-10f
+
+                Rings yagRing = new Rings("YagRing", "YagRing Description",
+                    new List<string> { "$item_blackmetal", "$item_blackmetalscrap" },
+                    new Dictionary<string, int> { { "Wood", 1 }, { "Stone", 1 } });
+
+                yagRing.effect.m_addMaxCarryWeight = 350;
+                yagRing.effect.m_attackStaminaUseModifier = -0.10f; //-10f
+
+                Rings queenRing = new Rings("QueenRing", "QueenRing Description",
+                    new List<string> { "$empty" },
+                    new Dictionary<string, int> { { "Wood", 1 }, { "Stone", 1 } });
+
+                queenRing.effect.m_addMaxCarryWeight = 400;
+                queenRing.effect.m_attackStaminaUseModifier = -0.10f; //-10f
+
+                /*foreach (var item in normalHelmets)
                 {
                     Diadem x_diadem = new Diadem(item);
-                }
+                }*/
 
             }
             catch (Exception ex)
@@ -76,7 +145,6 @@ namespace Valheimtestmod
     {
         private static GameObject SkillPanel;
         private static GameObject textObject;
-
         public static void ToggleSkillPanel()
         {
             if (!SkillPanel)
@@ -103,7 +171,7 @@ namespace Valheimtestmod
                     height: 80,
                     draggable: false);
                 SkillPanel.SetActive(false);
-                
+
                 textObject = GUIManager.Instance.CreateText(
                     text: "textObject",
                     parent: SkillPanel.transform,
@@ -146,8 +214,7 @@ namespace Valheimtestmod
         [HarmonyPatch(typeof(Player), "RaiseSkill")]
         public static void Postfix()
         {
-            SkillDisplay.Display();
-            //TogglePanel();
+            SkillDisplay.UpdateDisplay();
         }
     }
     public static class Patch2
